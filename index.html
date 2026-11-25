@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Promos por banco</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1a4a">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Promos">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: herramienta de bolsillo, clara, responde «dónde pago hoy» antes que nada
+   IDEA: la grilla de ofertas de la caja del súper, filtrada a tus tarjetas y resumida por rubro
+   PICTURE: cuatro tarjetas de rubro con la mejor promo del día, en sus colores (carrito, cruz, pico, colectivo)
+   COLOUR and TYPE: encabezado azul noche, fondo gris suave con tarjetas blancas; rubros en azul, verde, rojo suave, gris. Space Grotesk + Inter
+   LAYOUT: encabezado con selector de día, bancos, «lo mejor del día», bancos más usados, lista completa, mapa semanal */
+:root{color-scheme:light dark;--bg:light-dark(#f2f4f8,#090c16);--card:light-dark(#ffffff,#121828);--ink:light-dark(#0b0d14,#eef1fb);--mute:light-dark(#5a6072,#9aa3bd);--zone:light-dark(#e9edf6,#1a2134);--line:light-dark(#dfe3ee,#232b45);--head:#0b1a4a;--co:#1240e0;--co2:light-dark(#1240e0,#7d98ff)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,.pct,.num,.big{font-family:"Space Grotesk",Inter,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 max(4vw,14px)}
+header{background:var(--head);color:#fff;padding:calc(22px + env(safe-area-inset-top)) 0 20px}
+.wrap{padding-left:max(4vw,14px,env(safe-area-inset-left));padding-right:max(4vw,14px,env(safe-area-inset-right))}
+.ios{display:none;margin-top:12px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;font-size:14px;color:#dfe5ff}.ios b{color:#fff}.ios button{background:none;border:0;color:#fff;text-decoration:underline;min-height:32px}
+header h1{margin:0;font-size:clamp(28px,4.6vw,44px);line-height:1.05;font-weight:700;text-wrap:balance}
+header p{margin:6px 0 16px;color:#b9c4ea;font-size:15px}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.day{flex:none;min-width:64px;min-height:58px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.06);color:#fff;font:600 15px Inter,sans-serif;cursor:pointer;display:grid;place-items:center;line-height:1.1;padding:6px 10px}
+.day small{font-weight:500;font-size:12px;opacity:.75}
+.day[aria-pressed=true]{background:#fff;color:var(--head);border-color:#fff}
+.day.today:not([aria-pressed=true]){border-color:#8fa6ff}
+main{display:grid;gap:22px}main.wrap{padding-top:24px;padding-bottom:40px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,2.4vw,24px)}
+h2{font-size:clamp(20px,2.4vw,26px);line-height:1.1;margin:0 0 4px}
+.sub{color:var(--mute);font-size:14px;margin:0 0 14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select,input{font:500 15px Inter,sans-serif;color:var(--ink)}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--co2);outline-offset:2px}
+.chip{min-height:42px;padding:0 14px;border-radius:99px;border:1px solid var(--line);background:var(--card)}
+.chip[aria-pressed=true]{background:var(--co);border-color:var(--co);color:#fff}
+.bank.br[aria-pressed=true]{background:var(--bb);border-color:var(--bb);color:#fff}
+.bank[aria-pressed=true]::before{content:"✓ "}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:middle;box-shadow:0 0 0 1.5px rgba(255,255,255,.7)}
+.lab{font-size:13px;color:var(--mute);font-weight:600;margin:12px 0 6px}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.sw{display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer;min-height:44px}
+.sw input{appearance:none;width:44px;height:26px;border-radius:99px;background:var(--line);position:relative;cursor:pointer;margin:0;transition:background .2s}
+.sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw input:checked{background:var(--co)}.sw input:checked::after{transform:translateX(18px)}
+.link{background:none;border:0;color:var(--co2);font-weight:600;text-decoration:underline;min-height:44px;padding:0 4px}
+.hint{background:var(--zone);border-radius:12px;padding:10px 14px;font-size:14px}
+/* rubros */
+.k-super{--c:#1240e0;--cs:light-dark(#eaf0ff,#141c36);--ci:light-dark(#1240e0,#8aa4ff);--on:#fff}
+.k-farma{--c:light-dark(#0a9f4f,#2fbf6b);--cs:light-dark(#e3f6ea,#0f2a1c);--ci:light-dark(#08803f,#4fd88a);--on:#fff}
+.k-nafta{--c:light-dark(#d4685f,#c95a51);--cs:light-dark(#fbebe9,#2d1715);--ci:light-dark(#b8473e,#ff9a90);--on:#fff}
+.k-trans{--c:light-dark(#c3c9d4,#4a5164);--cs:light-dark(#f0f2f5,#1c2130);--ci:light-dark(#4f5666,#c3c9d6);--on:light-dark(#1d2230,#f1f3f6)}
+.ic{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--cs);color:var(--ci);flex:none}
+.ic svg{width:24px;height:24px}
+.best{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.tile{border-radius:16px;background:var(--cs);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);padding:16px;display:grid;gap:6px;align-content:start;text-align:left;cursor:pointer;color:var(--ink)}
+.tile .ic{background:var(--card);width:46px;height:46px}.tile .ic svg{width:28px;height:28px}
+.tile .top{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px}
+.tile .big{font-size:44px;font-weight:700;line-height:1;color:var(--ci);margin-top:6px}
+.tile .w{font-weight:600;font-size:16px;line-height:1.3}
+.tile .m{font-size:14px;color:var(--mute);line-height:1.4}
+.tile .go{font-size:14px;font-weight:600;color:var(--ci);margin-top:4px}
+.tile.none .big{font-size:20px;color:var(--mute)}
+.mono{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;font:700 12px/1 "Space Grotesk",sans-serif;flex:none}
+.bname{display:inline-flex;align-items:center;gap:6px}
+.bname .mono{width:22px;height:22px;font-size:9px;box-shadow:0 0 0 1px var(--line)}
+/* bancos */
+.bigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.bg{border:0;border-radius:16px;padding:14px;display:grid;gap:4px;align-content:start;text-align:left;background:var(--bb,var(--zone));color:var(--bf,var(--ink));min-height:150px}
+.bg[aria-pressed=true]{box-shadow:0 0 0 3px var(--card),0 0 0 5px var(--bb)}
+.bg .n{display:flex;align-items:center;gap:8px;font:700 17px/1.2 "Space Grotesk",sans-serif}
+.bg .p{font:700 30px/1 "Space Grotesk",sans-serif;margin-top:8px}
+.bg .d{font-size:14px;opacity:.92;line-height:1.35}.bg .k{font-size:12px;opacity:.85}
+.bg .ic{width:30px;height:30px;border-radius:9px;background:#fff}.bg .ic svg{width:19px;height:19px}
+.bg .pr{display:flex;align-items:center;gap:8px}
+.mio{font:600 12px Inter,sans-serif;background:rgba(255,255,255,.25);padding:2px 8px;border-radius:99px;white-space:nowrap}
+/* lista */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.tab{flex:none;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);display:inline-flex;align-items:center;gap:6px}
+.tab .ic{width:26px;height:26px;background:none;border-radius:0}.tab .ic svg{width:20px;height:20px}
+.tab[aria-pressed=true]{background:var(--c,var(--co));border-color:var(--c,var(--co));color:var(--on,#fff)}.tab[aria-pressed=true] .ic{color:var(--on,#fff)}
+.tab .n{opacity:.7;font-size:14px}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+input[type=search],select,.form input{min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:16px}
+#q{flex:1 1 220px}
+.list{display:grid;gap:10px}
+.it{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 14px;align-items:center;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c);border-radius:14px;padding:12px 14px}
+.it.mine{background:color-mix(in srgb,var(--cs) 55%,var(--card))}
+.it .t{font-weight:600;font-size:16px;line-height:1.3}
+.meta{font-size:14px;color:var(--mute);display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:3px}.meta span{white-space:nowrap}
+.it .pct{font-size:30px;font-weight:700;line-height:1;color:var(--ci);text-align:right}
+.it .pct small{display:block;font:500 12px Inter,sans-serif;color:var(--mute);margin-top:4px;white-space:nowrap}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:99px;border:1px dashed var(--mute);color:var(--mute)}
+.empty{padding:26px;text-align:center;color:var(--mute);border:1px dashed var(--line);border-radius:14px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:center;white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card)}
+thead th{font-weight:600;color:var(--mute)}th.today{color:var(--co2)}
+td.c{font-family:"Space Grotesk",sans-serif;font-weight:600}
+td.c[data-v]{background:color-mix(in srgb,var(--co2) calc(var(--a)*1%),transparent)}
+details summary{cursor:pointer;font-weight:600;min-height:32px}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}
+.form label{display:grid;gap:4px;font-size:13px;color:var(--mute)}
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:0;background:var(--co);color:#fff;font-weight:600}
+.del{min-height:32px;font-size:13px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--card)}
+.note{font-size:14px;color:var(--mute);max-width:72ch;margin:0}
+@media(max-width:600px){.it{grid-template-columns:auto minmax(0,1fr)}.it .pct{grid-column:2;text-align:left;display:flex;gap:10px;align-items:baseline}.it .pct small{margin:0}.tile .big{font-size:38px}table{font-size:13px}}
+@media(prefers-reduced-motion:no-preference){.it,.tile{animation:in .25s ease both}@keyframes in{from{opacity:0;transform:translateY(4px)}}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>¿Dónde conviene pagar?</h1>
+    <p>Elegí el día y marcá tus bancos: te mostramos el mejor descuento en cada rubro. <span id="upd" style="white-space:nowrap;color:#fff;font-weight:600"></span></p>
+    <div class="days" id="days" role="group" aria-label="Día"></div>
+    <div class="ios" id="ios">Para instalarla en tu iPhone: tocá <b>Compartir</b> y después <b>Agregar a pantalla de inicio</b>. <button type="button" id="iosx">Entendido</button></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="panel">
+    <h2>¿Con qué pagás?</h2>
+    <p class="sub">Tocá tus bancos y billeteras. Quedan guardados en este navegador.</p>
+    <div class="lab" style="margin-top:0">Los más usados</div>
+    <div class="row" id="banks"></div>
+    <div class="lab">Otros bancos y billeteras</div>
+    <div class="row" id="banks2"></div>
+    <div class="bar">
+      <label class="sw"><input type="checkbox" id="onlyMine"> Mostrar solo mis bancos</label>
+      <button class="link" id="clear" type="button">Desmarcar todos</button>
+    </div>
+  </section>
+
+  <section>
+    <h2 id="bestT">Lo mejor de hoy</h2>
+    <p class="sub" id="bestS"></p>
+    <div class="best" id="best"></div>
+  </section>
+
+  <section>
+    <h2 id="bigt">Los bancos más usados</h2>
+    <p class="sub">La mejor promo de cada uno. Tocá una tarjeta para marcarlo como tuyo.</p>
+    <div class="bigs" id="bigs"></div>
+  </section>
+
+  <section class="panel" id="todo">
+    <h2 id="listT">Todas las promos</h2>
+    <p class="sub" id="listS"></p>
+    <div class="tabs" id="cats" role="group" aria-label="Rubro"></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Buscar comercio o banco (ej. Coto, YPF)" aria-label="Buscar">
+      <select id="sort" aria-label="Ordenar"><option value="pct">Mayor descuento</option><option value="name">Comercio A–Z</option></select>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section class="panel">
+    <h2>La semana de un vistazo</h2>
+    <p class="sub" id="mapnote"></p>
+    <div class="scroll"><table id="map"></table></div>
+  </section>
+
+  <section class="panel">
+    <details>
+      <summary>Agregar una promo que no está</summary>
+      <p class="note" style="margin-top:8px">Para sumar algo que te llegó por mail o viste en la app. Queda guardado solo en este navegador.</p>
+      <form class="form" id="f">
+        <label>Rubro<select name="cat"><option value="super">Supermercado</option><option value="farma">Farmacia</option><option value="nafta">Combustible</option><option value="trans">Transporte</option></select></label>
+        <label>Comercio<input name="com" required></label>
+        <label>Banco / billetera<input name="ban" required list="banklist"></label>
+        <label>Día<select name="dia"><option value="*">Todos</option><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="7">Domingo</option></select></label>
+        <label>%<input name="pct" type="number" min="1" max="100" required></label>
+        <label>Tope<input name="tope" placeholder="$10.000/mes"></label>
+        <label>Medio de pago<input name="medio" placeholder="MODO, QR, NFC…"></label>
+        <label style="align-self:end"><button class="btn" type="submit">Agregar</button></label>
+      </form>
+      <datalist id="banklist"></datalist>
+      <div class="list" id="ownlist" style="margin-top:12px"></div>
+    </details>
+  </section>
+
+  <p class="note">Datos tomados de notas periodísticas de noviembre 2026; las marcadas «dato de octubre» pueden haber cambiado. Topes, mínimos y adhesiones cambian seguido: confirmá en la app del banco antes de pagar. Colores e iniciales son referencias, no logos oficiales.</p>
+</main>
+
+<script>
+{
+const DN=['','Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const DL=['','lunes','martes','miércoles','jueves','viernes','sábado','domingo'];
+const CATS=[['all','Todo'],['super','Súper'],['farma','Farmacias'],['nafta','Combustible'],['trans','Transporte']];
+const SV=(a,b='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${b}>${a}</svg>`;
+const ICON={
+super:SV('<path d="M2 4h2.5l2.3 10.2a1.2 1.2 0 0 0 1.2.9h8.6a1.2 1.2 0 0 0 1.2-.9L19.5 8H5.6"/><path d="M9 11.5h7"/><circle cx="9" cy="19.2" r="1.5"/><circle cx="16.5" cy="19.2" r="1.5"/>'),
+farma:SV('<path fill="currentColor" stroke="none" d="M8.5 2.5h7v6h6v7h-6v6h-7v-6h-6v-7h6z"/>'),
+nafta:SV('<path d="M5 6.5h10v5H5z"/><path d="M15 8h5.5l1.8 2.5"/><path d="M6.5 11.5 8 18.5h3.5l1.5-7"/><path d="M8.5 14.5h3"/><path d="M5 9 2 11.5v8"/>'),
+trans:SV('<rect x="4" y="2.5" width="16" height="15.5" rx="2.5"/><path d="M4 10.5h16"/><path d="M8 5.5h8"/><circle cx="8" cy="14.5" r="1" fill="currentColor"/><circle cx="16" cy="14.5" r="1" fill="currentColor"/><path d="M6.5 18v2.5M17.5 18v2.5"/><path d="M2.5 6v3M21.5 6v3"/>')};
+
+const CN={super:'Supermercados',farma:'Farmacias',nafta:'Combustible',trans:'Transporte'};
+let D=[],META={};
+const TOP=['Mercado Pago','Banco Nación','Galicia','Santander','Cuenta DNI (Provincia)','BBVA','Banco Macro','Naranja X'];
+// Colores de marca aproximados: [fondo, texto]
+const BRAND={'Mercado Pago':['#009ee3','#ffffff'],'Banco Nación':['#0f4c94','#ffffff'],'Galicia':['#d0530a','#ffffff'],'Santander':['#d40000','#ffffff'],'Cuenta DNI (Provincia)':['#00874a','#ffffff'],'BBVA':['#004481','#ffffff'],'Banco Macro':['#1c3f94','#ffffff'],'Naranja X':['#e04800','#ffffff'],'Brubank':['#6233e0','#ffffff'],'ICBC':['#c4161c','#ffffff'],'Supervielle':['#c8102e','#ffffff']};
+const INI={'Mercado Pago':'MP','Banco Nación':'BN','Galicia':'GA','Santander':'SA','Cuenta DNI (Provincia)':'DNI','BBVA':'BB','Banco Macro':'MA','Naranja X':'NX','Brubank':'BR','ICBC':'IC','Supervielle':'SU'};
+
+const LS=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const SS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now=new Date(),g=now.getDay(),TODAY=g===0?7:g;
+const dateOf=d=>{const x=new Date(now);x.setDate(now.getDate()+(d-TODAY));return x.getDate()};
+let own=LS('promos-own')||[];
+const st={day:TODAY,cat:'all',mine:new Set(LS('promos-banks')||[]),only:LS('promos-only'),q:'',sort:'pct'};
+if(st.only===null)st.only=st.mine.size>0;
+const all=()=>D.map(r=>({...r,dias:String(r.dias??'*'),pct:+r.pct||0})).concat(own.map((o,i)=>({...o,own:1,idx:i})));
+const onDay=(p,d)=>d===0||p.dias==='*'||p.dias.includes(String(d));
+const rk=b=>{const i=TOP.indexOf(b);return i<0?99:i};
+const useMine=()=>st.only&&st.mine.size>0;
+const $=id=>document.getElementById(id);
+const diasTxt=s=>s==='*'?'Todos los días':[...s].map(d=>DN[+d]).join(', ');
+const when=()=>st.day?(st.day===TODAY?'hoy':'el '+DL[st.day]+' '+dateOf(st.day)):'esta semana';
+const bname=b=>`<span class="bname">${BRAND[b]?`<span class="mono" style="color:${BRAND[b][0]}">${INI[b]||''}</span>`:''}${esc(b)}</span>`;
+
+function base(){let A=all().filter(p=>onDay(p,st.day));if(useMine())A=A.filter(p=>st.mine.has(p.ban));return A}
+
+function renderDays(){
+  $('days').innerHTML=[1,2,3,4,5,6,7].map(d=>`<button class="day${d===TODAY?' today':''}" data-d="${d}" aria-pressed="${st.day===d}">${d===TODAY?'Hoy':DN[d]}<small>${DN[d]} ${dateOf(d)}</small></button>`).join('')+`<button class="day" data-d="0" aria-pressed="${st.day===0}">Semana<small>todos</small></button>`;
+}
+
+function renderBanks(){
+  const A=all();
+  const banks=[...new Set(A.map(p=>p.ban))].sort((a,b)=>a.localeCompare(b,'es'));
+  const chip=b=>`<button class="chip bank${BRAND[b]?' br':''}" ${BRAND[b]?`style="--bb:${BRAND[b][0]}"`:''} data-b="${esc(b)}" aria-pressed="${st.mine.has(b)}">${BRAND[b]&&!st.mine.has(b)?`<span class="dot" style="background:${BRAND[b][0]}"></span>`:''}${esc(b)}</button>`;
+  $('banks').innerHTML=TOP.filter(b=>banks.includes(b)).map(chip).join('');
+  $('banks2').innerHTML=banks.filter(b=>!TOP.includes(b)).map(chip).join('');
+  $('banklist').innerHTML=banks.map(b=>`<option value="${esc(b)}">`).join('');
+  $('onlyMine').checked=st.only;
+  $('clear').style.visibility=st.mine.size?'visible':'hidden';
+}
+
+function renderBest(){
+  const A=base();
+  $('bestT').textContent='Lo mejor '+(st.day===0?'de la semana':st.day===TODAY?'de hoy':'del '+DL[st.day]+' '+dateOf(st.day));
+  $('bestS').textContent=useMine()?'Con tus bancos ('+st.mine.size+'). Tocá un rubro para ver todas sus promos.':(st.mine.size?'Con todos los bancos (activá «solo mis bancos» para filtrar).':'Con todos los bancos. Marcá los tuyos arriba para ver solo lo que te sirve.');
+  $('best').innerHTML=['super','farma','nafta','trans'].map(c=>{
+    const P=A.filter(p=>p.cat===c).sort((a,b)=>b.pct-a.pct||rk(a.ban)-rk(b.ban));const t=P[0];
+    const head=`<span class="top"><span class="ic">${ICON[c]}</span>${CN[c]}</span>`;
+    if(!t)return `<button class="tile k-${c} none" data-go="${c}">${head}<span class="big">Sin promos</span><span class="m">${useMine()?'con tus bancos ':''}${esc(when())}</span></button>`;
+    return `<button class="tile k-${c}" data-go="${c}">${head}<span class="big">${esc(t.pct)}%</span><span class="w">${esc(t.com)}</span><span class="m">${bname(t.ban)}</span><span class="m">Tope ${esc(t.tope||'—')}${t.min?' · mín. '+esc(t.min):''}${st.day===0?' · '+esc(diasTxt(t.dias)):''}</span><span class="go">${P.length>1?'Ver las '+P.length+' promos →':'Ver detalle →'}</span></button>`;
+  }).join('');
+}
+
+function renderBig(){
+  const A=all().filter(p=>onDay(p,st.day));
+  $('bigs').innerHTML=TOP.map(b=>{
+    const P=A.filter(p=>p.ban===b).sort((x,y)=>y.pct-x.pct);const t=P[0];const br=BRAND[b]||['',''];
+    return `<button class="bg" style="--bb:${br[0]};--bf:${br[1]}" data-b="${esc(b)}" aria-pressed="${st.mine.has(b)}"><span class="n"><span class="mono" style="color:${br[0]}">${INI[b]||''}</span>${esc(b)}${st.mine.has(b)?'<span class="mio">✓ Mío</span>':''}</span>`+
+      (t?`<span class="pr k-${t.cat}"><span class="ic">${ICON[t.cat]}</span><span class="p">${esc(t.pct)}%</span></span><span class="d">${esc(t.com)} · ${CN[t.cat]}<br>Tope ${esc(t.tope||'—')}</span><span class="k">${P.length>2?'+'+(P.length-1)+' promos más':P.length===2?'+1 promo más':'1 promo'} ${esc(when())}</span>`
+         :`<span class="d" style="margin-top:8px">Sin promos relevadas ${esc(when())}</span>`)+`</button>`;
+  }).join('');
+}
+
+function renderList(){
+  const q=st.q.trim().toLowerCase();const A=base();
+  $('cats').innerHTML=CATS.map(([k,n])=>{const c=A.filter(p=>k==='all'||p.cat===k).length;return `<button class="tab${ICON[k]?' k-'+k:''}" data-c="${k}" aria-pressed="${st.cat===k}">${ICON[k]?'<span class="ic">'+ICON[k]+'</span>':''}${n} <span class="n">${c}</span></button>`}).join('');
+  let L=A.filter(p=>st.cat==='all'||p.cat===st.cat);
+  if(q)L=L.filter(p=>(p.com+' '+p.ban).toLowerCase().includes(q));
+  L.sort(st.sort==='pct'?(a,b)=>(st.mine.has(b.ban)-st.mine.has(a.ban))||b.pct-a.pct||rk(a.ban)-rk(b.ban):(a,b)=>a.com.localeCompare(b.com,'es'));
+  $('listT').textContent='Todas las promos '+(st.day===0?'de la semana':st.day===TODAY?'de hoy':'del '+DL[st.day]);
+  $('listS').textContent=L.length+(L.length===1?' promo':' promos')+(useMine()?' con tus bancos':'')+(st.mine.size&&!useMine()?'. Las de tus bancos aparecen primero.':'.');
+  $('list').innerHTML=L.length?L.map(card).join(''):`<div class="empty">No hay promos para este filtro. Probá con otro día o rubro${useMine()?', o apagá «solo mis bancos»':''}.</div>`;
+}
+
+function card(p){
+  const m=st.mine.has(p.ban);
+  const extra=[p.min?'Mín. '+esc(p.min):'',esc(p.medio||'')].filter(Boolean).map(x=>`<span>${x}</span>`).join('');
+  return `<article class="it k-${esc(p.cat)}${m?' mine':''}"><span class="ic">${ICON[p.cat]||''}</span>
+  <div><div class="t">${esc(p.com)}</div><div class="meta"><span>${bname(p.ban)}</span><span>Tope ${esc(p.tope||'—')}</span>${extra}${p.nota==='oct'?'<span class="tag">dato de octubre</span>':''}${p.own?'<span class="tag">propia</span>':''}</div>${p.nota&&p.nota!=='oct'?`<div class="meta"><span style="white-space:normal">${esc(p.nota)}</span></div>`:''}${p.own?`<button class="del" data-del="${p.idx}">Quitar</button>`:''}</div>
+  <div class="pct">${esc(p.pct)}%<small>${esc(diasTxt(p.dias))}</small></div></article>`;
+}
+
+function renderMap(){
+  let A=all().filter(p=>st.cat==='all'||p.cat===st.cat);
+  if(useMine())A=A.filter(p=>st.mine.has(p.ban));
+  const banks=[...new Set(A.map(p=>p.ban))].sort((a,b)=>(st.mine.has(b)-st.mine.has(a))||rk(a)-rk(b)||a.localeCompare(b,'es'));
+  $('mapnote').textContent='El mejor descuento de cada banco por día'+(st.cat==='all'?', en todos los rubros.':' en '+CN[st.cat].toLowerCase()+'.')+' Cuanto más azul, más conviene.';
+  const head=`<thead><tr><th>Banco</th>${[1,2,3,4,5,6,7].map(d=>`<th class="${d===TODAY?'today':''}">${DN[d]} ${dateOf(d)}</th>`).join('')}</tr></thead>`;
+  const body=banks.map(b=>`<tr><td>${st.mine.has(b)?'<b>'+bname(b)+'</b>':bname(b)}</td>${[1,2,3,4,5,6,7].map(d=>{const v=Math.max(0,...A.filter(p=>p.ban===b&&onDay(p,d)).map(p=>p.pct));return v?`<td class="c" data-v style="--a:${Math.round(8+v*0.32)}">${v}%</td>`:'<td class="c" style="color:var(--line)">·</td>'}).join('')}</tr>`).join('');
+  $('map').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
+function render(){renderDays();renderBanks();renderBest();renderBig();renderList();renderMap();$('ownlist').innerHTML=own.map((o,i)=>card({...o,own:1,idx:i})).join('')}
+
+function toggleBank(b){st.mine.has(b)?st.mine.delete(b):st.mine.add(b);if(st.mine.size===1&&LS('promos-only')===null)st.only=true;SS('promos-banks',[...st.mine]);render()}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.d!==undefined){st.day=+t.dataset.d;render()}
+  else if(t.dataset.go){st.cat=t.dataset.go;render();$('todo').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
+  else if(t.dataset.c){st.cat=t.dataset.c;render()}
+  else if(t.dataset.b!==undefined)toggleBank(t.dataset.b);
+  else if(t.dataset.del!==undefined){own.splice(+t.dataset.del,1);SS('promos-own',own);render()}
+  else if(t.id==='clear'){st.mine.clear();SS('promos-banks',[]);render()}
+});
+$('q').addEventListener('input',e=>{st.q=e.target.value;renderList()});
+$('sort').addEventListener('change',e=>{st.sort=e.target.value;renderList()});
+$('onlyMine').addEventListener('change',e=>{st.only=e.target.checked;SS('promos-only',st.only);render()});
+$('f').addEventListener('submit',e=>{
+  e.preventDefault();const f=new FormData(e.target);
+  own.push({cat:f.get('cat'),com:f.get('com').trim(),ban:f.get('ban').trim(),dias:f.get('dia'),pct:Math.min(100,Math.max(1,+f.get('pct')||0)),tope:f.get('tope').trim(),min:'',medio:f.get('medio').trim(),nota:''});
+  SS('promos-own',own);e.target.reset();render();
+});
+$('upd').textContent='Cargando promos…';
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+{const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),inst=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+ if(ios&&!inst&&!LS('promos-ios-ok'))$('ios').style.display='block';
+ $('iosx').addEventListener('click',()=>{$('ios').style.display='none';SS('promos-ios-ok',true)});}
+fetch('promos.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(j=>{D=Array.isArray(j.promos)?j.promos:[];META=j;
+  const f=String(j.actualizado||'');const m=f.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  $('upd').textContent=m?'Actualizado el '+(+m[3])+'/'+(+m[2])+'/'+m[1]+' · '+D.length+' promos':D.length+' promos';render()})
+ .catch(()=>{$('upd').textContent='No se pudieron cargar las promos. Recargá la página.';render()});
+}
+</script>
+</body>
+</html>
