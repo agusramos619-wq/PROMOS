@@ -74,5 +74,6 @@
 {"cat": "super", "com": "Mayorista Nini", "ban": "Banco Nación", "dias": "4", "pct": 20, "tope": "$20.000/mes", "min": "", "medio": "Crédito o débito BNA, presencial", "nota": "Hasta el 26/11"},
 {"cat": "super", "com": "La Anónima", "ban": "Banco Nación", "dias": "56", "pct": 20, "tope": "Ver app", "min": "", "medio": "Presencial", "nota": ""},
 {"cat": "super", "com": "Supermercados adheridos", "ban": "Banco Nación", "dias": "12345", "pct": 5, "tope": "Ver app", "min": "", "medio": "Adicional a la promo del día", "nota": "Solo jubilados y pensionados de ANSES"},
-{"cat": "nafta", "com": "YPF, Shell, Axion, Puma, Gulf, Dapsa", "ban": "Banco Nación", "dias": "5", "pct": 20, "tope": "$10.000/mes", "min": "", "medio": "Crédito BNA, presencial", "nota": "Shell: +5% extra con Shell On Top. Fuente: semananacion.com.ar"}
+{"cat": "nafta", "com": "YPF, Shell, Axion, Puma, Gulf, Dapsa", "ban": "Banco Nación", "dias": "5", "pct": 20, "tope": "$10.000/mes", "min": "", "medio": "Crédito BNA, presencial", "nota": "Shell: +5% extra con Shell On Top. Fuente: semananacion.com.ar"},
+{"cat": "farma", "com": "Farmacias y perfumerías adheridas", "ban": "Cuenta DNI (Provincia)", "dias": "34", "pct": 10, "tope": "Sin tope", "min": "", "medio": "App Cuenta DNI", "nota": ""}
 ]}
