@@ -338,7 +338,7 @@ $('f').addEventListener('submit',e=>{
 });
 $('upd').textContent='Cargando promos…';
 ['super','farma','nafta','trans'].forEach((k,i)=>{$('d'+(i+1)).innerHTML=ICON[k]});
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').catch(()=>{})}
+if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(r=>r.update()).catch(()=>{});let reloaded=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!reloaded){reloaded=true;location.reload()}})}
 {const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),inst=window.navigator.standalone||matchMedia('(display-mode: standalone)').matches;
  if(ios&&!inst&&!LS('promos-ios-ok'))$('ios').style.display='block';
  $('iosx').addEventListener('click',()=>{$('ios').style.display='none';SS('promos-ios-ok',true)});}

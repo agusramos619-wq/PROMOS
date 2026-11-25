@@ -1,6 +1,6 @@
 // Service worker: guarda la app para usarla sin conexión.
 // Cambiá VERSION cada vez que modifiques index.html, así los celulares bajan la versión nueva.
-const VERSION = 'promos-v3';
+const VERSION = 'promos-v4';
 const APP = ['./', './index.html', './manifest.json', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -24,7 +24,15 @@ self.addEventListener('fetch', e => {
     }).catch(() => caches.match('./promos.json')));
     return;
   }
-  // Resto de la app: primero lo guardado (abre rápido), si no está, internet.
+  // Páginas y código de la app: primero internet (así los cambios se ven enseguida); sin conexión, lo guardado.
+  if (req.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/') || url.pathname.endsWith('.js') || url.pathname.endsWith('manifest.json')) {
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => {
+      if (res.ok && url.origin === location.origin) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req).then(hit => hit || caches.match('./index.html'))));
+    return;
+  }
+  // Íconos y fuentes: primero lo guardado (no cambian casi nunca).
   e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => {
     if (res.ok && url.origin === location.origin) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
     return res;
