@@ -84,6 +84,23 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 .tile .big{font-size:44px;font-weight:700;line-height:1;color:var(--ci);margin-top:6px}
 .tile .w{font-weight:600;font-size:16px;line-height:1.3}
 .tile .m{font-size:14px;color:var(--mute);line-height:1.4}
+.calc{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 14px}
+.calc label{font-weight:600}.calc .money{display:flex;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding-left:12px;min-height:44px}
+.calc .money span{font:700 18px "Space Grotesk",sans-serif;color:var(--mute)}.calc input{border:0;background:none;font:700 20px "Space Grotesk",sans-serif;width:9ch;min-height:42px;padding:0 10px 0 4px;color:var(--ink)}
+.calc input:focus{outline:none}.calc .money:focus-within{outline:3px solid var(--co2);outline-offset:2px}
+.qa{min-height:36px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-size:14px}
+.month{margin-left:auto;font-size:14px;color:var(--mute)}.month b{color:var(--ink);font-family:"Space Grotesk",sans-serif;font-size:16px}
+.tile .sv{font:700 17px "Space Grotesk",sans-serif;color:var(--ink);background:var(--card);border-radius:10px;padding:4px 10px;justify-self:start}
+.act{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:8px}
+.sv{font-weight:700;color:var(--ci)}.sv.no{color:var(--mute);font-weight:600}
+.mini{min-height:36px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;color:var(--ink);text-decoration:none;cursor:pointer}
+.mini.pri{background:var(--c);border-color:var(--c);color:var(--on)}
+.mini svg{width:16px;height:16px}
+.prog{margin-top:8px;font-size:13px;color:var(--mute)}.prog .bar{height:8px;border-radius:99px;background:var(--zone);overflow:hidden;margin-top:4px;max-width:320px}.prog .bar i{display:block;height:100%;background:var(--c);border-radius:99px}
+.usef{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px;background:var(--cs);padding:10px;border-radius:12px}
+.usef input{min-height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);padding:0 10px;font-size:16px;width:11ch}
+.it.done{opacity:.62}.tag.ok{border-style:solid;border-color:var(--c);color:var(--ci)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;z-index:9;display:none}
 .tile .go{font-size:14px;font-weight:600;color:var(--ci);margin-top:4px}
 .tile.none .big{font-size:20px;color:var(--mute)}
 .mono{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#fff;font:700 12px/1 "Space Grotesk",sans-serif;flex:none}
@@ -162,6 +179,12 @@ details summary{cursor:pointer;font-weight:600;min-height:32px}
   <section>
     <h2 id="bestT">Lo mejor de hoy</h2>
     <p class="sub" id="bestS"></p>
+    <div class="calc">
+      <label for="amt">¿Cuánto vas a gastar?</label>
+      <div class="money"><span>$</span><input id="amt" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Monto a gastar en pesos"></div>
+      <button class="qa" data-amt="20000" type="button">$20.000</button><button class="qa" data-amt="50000" type="button">$50.000</button><button class="qa" data-amt="100000" type="button">$100.000</button><button class="qa" data-amt="0" type="button">Borrar</button>
+      <span class="month" id="month"></span>
+    </div>
     <div class="best" id="best"></div>
   </section>
 
@@ -177,7 +200,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px}
     <div class="tabs" id="cats" role="group" aria-label="Rubro"></div>
     <div class="tools">
       <input id="q" type="search" placeholder="Buscar comercio o banco (ej. Coto, YPF)" aria-label="Buscar">
-      <select id="sort" aria-label="Ordenar"><option value="pct">Mayor descuento</option><option value="name">Comercio A–Z</option></select>
+      <select id="sort" aria-label="Ordenar"><option value="save">Mayor ahorro</option><option value="pct">Mayor descuento</option><option value="name">Comercio A–Z</option></select>
     </div>
     <div class="list" id="list"></div>
   </section>
@@ -209,6 +232,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px}
 
   <p class="note">Datos tomados de notas periodísticas de noviembre 2026; las marcadas «dato de octubre» pueden haber cambiado. Topes, mínimos y adhesiones cambian seguido: confirmá en la app del banco antes de pagar. Colores e iniciales son referencias, no logos oficiales.</p>
 </main>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 {
@@ -236,7 +260,23 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const now=new Date(),g=now.getDay(),TODAY=g===0?7:g;
 const dateOf=d=>{const x=new Date(now);x.setDate(now.getDate()+(d-TODAY));return x.getDate()};
 let own=LS('promos-own')||[];
-const st={day:TODAY,cat:'all',mine:new Set(LS('promos-banks')||[]),only:LS('promos-only'),q:'',sort:'pct'};
+const st={day:TODAY,cat:'all',mine:new Set(LS('promos-banks')||[]),only:LS('promos-only'),q:'',sort:'pct',amt:+(LS('promos-amt')||0),using:null};
+if(st.amt)st.sort='save';
+let uso=LS('promos-uso')||{};
+const money=n=>'$'+Math.round(n).toLocaleString('es-AR');
+const num=s=>{const m=String(s||'').match(/\$\s?([\d.]+)/);return m?+m[1].replace(/\./g,''):null};
+const keyOf=p=>[p.cat,p.com,p.ban,p.dias].join('|');
+function topeInfo(p){const t=String(p.tope||'');if(/sin tope/i.test(t))return{cap:Infinity,per:null};const c=num(t);if(c===null)return{cap:null,per:null};
+  const per=/mes/i.test(t)?'mes':/semana/i.test(t)?'semana':/d[ií]a/i.test(t)?'dia':'compra';return{cap:c,per}}
+function periodStart(per){const d=new Date();d.setHours(0,0,0,0);if(per==='mes')d.setDate(1);else if(per==='semana'){const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w)}return d.getTime()}
+function used(p){const ti=topeInfo(p);if(!ti.per||ti.per==='compra')return 0;const from=periodStart(ti.per);return (uso[keyOf(p)]||[]).filter(u=>u.t>=from).reduce((a,u)=>a+u.r,0)}
+function left(p){const ti=topeInfo(p);if(ti.cap===null)return null;if(ti.cap===Infinity)return Infinity;return Math.max(0,ti.cap-used(p))}
+function saving(p,amt){if(!amt)return null;const mn=num(p.min);if(mn&&amt<mn)return{ok:false,why:'No llega al mínimo de '+money(mn)};const l=left(p);if(l===0)return{ok:false,why:'Tope ya alcanzado'};
+  let r=amt*p.pct/100;let capped=false;if(l!==null&&l!==Infinity&&r>l){r=l;capped=true}return{ok:true,r,capped,unk:l===null}}
+const isDone=p=>left(p)===0;
+function monthTotal(){const from=periodStart('mes');let s=0;for(const k in uso)for(const u of uso[k])if(u.t>=from)s+=u.r;return s}
+function shareText(p){return `${p.pct}% en ${p.com} con ${p.ban} (${diasTxt(p.dias).toLowerCase()})${p.tope&&!/ver app/i.test(p.tope)?'. Tope: '+p.tope:''}${p.min?'. Mínimo: '+p.min:''}. Mirá más en https://agusramos619-wq.github.io/PROMOS/`}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2400)}
 if(st.only===null)st.only=st.mine.size>0;
 const all=()=>D.map(r=>({...r,dias:String(r.dias??'*'),pct:+r.pct||0})).concat(own.map((o,i)=>({...o,own:1,idx:i})));
 const onDay=(p,d)=>d===0||p.dias==='*'||p.dias.includes(String(d));
@@ -269,10 +309,10 @@ function renderBest(){
   $('bestT').textContent='Lo mejor '+(st.day===0?'de la semana':st.day===TODAY?'de hoy':'del '+DL[st.day]+' '+dateOf(st.day));
   $('bestS').textContent=useMine()?'Con tus bancos ('+st.mine.size+'). Tocá un rubro para ver todas sus promos.':(st.mine.size?'Con todos los bancos (activá «solo mis bancos» para filtrar).':'Con todos los bancos. Marcá los tuyos arriba para ver solo lo que te sirve.');
   $('best').innerHTML=['super','farma','nafta','trans'].map(c=>{
-    const P=A.filter(p=>p.cat===c).sort((a,b)=>b.pct-a.pct||rk(a.ban)-rk(b.ban));const t=P[0];
+    const P=A.filter(p=>p.cat===c&&!isDone(p)).sort((a,b)=>st.amt?((saving(b,st.amt)?.ok?saving(b,st.amt).r:-1)-(saving(a,st.amt)?.ok?saving(a,st.amt).r:-1))||b.pct-a.pct:b.pct-a.pct||rk(a.ban)-rk(b.ban));const t=P[0];const sv=t&&saving(t,st.amt);
     const head=`<span class="top"><span class="ic">${ICON[c]}</span>${CN[c]}</span>`;
     if(!t)return `<button class="tile k-${c} none" data-go="${c}">${head}<span class="big">Sin promos</span><span class="m">${useMine()?'con tus bancos ':''}${esc(when())}</span></button>`;
-    return `<button class="tile k-${c}" data-go="${c}">${head}<span class="big">${esc(t.pct)}%</span><span class="w">${esc(t.com)}</span><span class="m">${bname(t.ban)}</span><span class="m">Tope ${esc(t.tope||'—')}${t.min?' · mín. '+esc(t.min):''}${st.day===0?' · '+esc(diasTxt(t.dias)):''}</span><span class="go">${P.length>1?'Ver las '+P.length+' promos →':'Ver detalle →'}</span></button>`;
+    return `<button class="tile k-${c}" data-go="${c}">${head}<span class="big">${esc(t.pct)}%</span><span class="w">${esc(t.com)}</span><span class="m">${bname(t.ban)}</span>${sv?`<span class="sv">${sv.ok?'Ahorrás '+money(sv.r)+(sv.unk?' (tope: ver app)':''):esc(sv.why)}</span>`:''}<span class="m">Tope ${esc(t.tope||'—')}${t.min?' · mín. '+esc(t.min):''}${st.day===0?' · '+esc(diasTxt(t.dias)):''}</span><span class="go">${P.length>1?'Ver las '+P.length+' promos →':'Ver detalle →'}</span></button>`;
   }).join('');
 }
 
@@ -291,17 +331,24 @@ function renderList(){
   $('cats').innerHTML=CATS.map(([k,n])=>{const c=A.filter(p=>k==='all'||p.cat===k).length;return `<button class="tab${ICON[k]?' k-'+k:''}" data-c="${k}" aria-pressed="${st.cat===k}">${ICON[k]?'<span class="ic">'+ICON[k]+'</span>':''}${n} <span class="n">${c}</span></button>`}).join('');
   let L=A.filter(p=>st.cat==='all'||p.cat===st.cat);
   if(q)L=L.filter(p=>(p.com+' '+p.ban).toLowerCase().includes(q));
-  L.sort(st.sort==='pct'?(a,b)=>(st.mine.has(b.ban)-st.mine.has(a.ban))||b.pct-a.pct||rk(a.ban)-rk(b.ban):(a,b)=>a.com.localeCompare(b.com,'es'));
+  const S=p=>{const v=saving(p,st.amt);return v&&v.ok?v.r:-1};
+  L.sort(st.sort==='save'&&st.amt?(a,b)=>isDone(a)-isDone(b)||S(b)-S(a)||b.pct-a.pct:st.sort!=='name'?(a,b)=>isDone(a)-isDone(b)||(st.mine.has(b.ban)-st.mine.has(a.ban))||b.pct-a.pct||rk(a.ban)-rk(b.ban):(a,b)=>a.com.localeCompare(b.com,'es'));
   $('listT').textContent='Todas las promos '+(st.day===0?'de la semana':st.day===TODAY?'de hoy':'del '+DL[st.day]);
   $('listS').textContent=L.length+(L.length===1?' promo':' promos')+(useMine()?' con tus bancos':'')+(st.mine.size&&!useMine()?'. Las de tus bancos aparecen primero.':'.');
   $('list').innerHTML=L.length?L.map(card).join(''):`<div class="empty">No hay promos para este filtro. Probá con otro día o rubro${useMine()?', o apagá «solo mis bancos»':''}.</div>`;
 }
 
+const SHARE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>';
 function card(p){
-  const m=st.mine.has(p.ban);
+  const m=st.mine.has(p.ban),k=keyOf(p),done=isDone(p),ti=topeInfo(p),u=used(p),sv=saving(p,st.amt);
   const extra=[p.min?'Mín. '+esc(p.min):'',esc(p.medio||'')].filter(Boolean).map(x=>`<span>${x}</span>`).join('');
-  return `<article class="it k-${esc(p.cat)}${m?' mine':''}"><span class="ic">${ICON[p.cat]||''}</span>
-  <div><div class="t">${esc(p.com)}</div><div class="meta"><span>${bname(p.ban)}</span><span>Tope ${esc(p.tope||'—')}</span>${extra}${p.nota==='oct'?'<span class="tag">dato de octubre</span>':''}${p.own?'<span class="tag">propia</span>':''}</div>${p.nota&&p.nota!=='oct'?`<div class="meta"><span style="white-space:normal">${esc(p.nota)}</span></div>`:''}${p.own?`<button class="del" data-del="${p.idx}">Quitar</button>`:''}</div>
+  const prog=(ti.per&&ti.per!=='compra'&&ti.cap!==Infinity&&u>0)?`<div class="prog">Usaste ${money(u)} de ${money(ti.cap)} ${ti.per==='mes'?'este mes':ti.per==='semana'?'esta semana':'hoy'}<div class="bar"><i style="width:${Math.min(100,u/ti.cap*100)}%"></i></div></div>`:'';
+  const svTxt=sv?`<span class="sv${sv.ok?'':' no'}">${sv.ok?'Ahorrás '+money(sv.r)+(sv.capped?' (tope)':'')+(sv.unk?' · tope: ver app':''):esc(sv.why)}</span>`:'';
+  const hasUse=(uso[k]||[]).length>0;
+  const form=st.using===k?`<form class="usef" data-k="${esc(k)}"><label>¿Cuánto gastaste? <input name="g" inputmode="numeric" value="${st.amt||''}" placeholder="$" required></label><button class="mini pri" type="submit">Guardar</button><button class="mini" type="button" data-cancel="1">Cancelar</button></form>`:'';
+  const acts=p.own?'':`<div class="act">${svTxt}<button class="mini" type="button" data-use="${esc(k)}">✓ La usé</button>${hasUse?`<button class="mini" type="button" data-undo="${esc(k)}">Deshacer</button>`:''}<a class="mini" data-share="${esc(k)}" href="https://wa.me/?text=${encodeURIComponent(shareText(p))}" target="_blank" rel="noopener">${SHARE}Compartir</a></div>`;
+  return `<article class="it k-${esc(p.cat)}${m?' mine':''}${done?' done':''}"><span class="ic">${ICON[p.cat]||''}</span>
+  <div><div class="t">${esc(p.com)}</div><div class="meta"><span>${bname(p.ban)}</span><span>Tope ${esc(p.tope||'—')}</span>${extra}${p.nota==='oct'?'<span class="tag">dato de octubre</span>':''}${p.own?'<span class="tag">propia</span>':''}${done?'<span class="tag ok">Tope alcanzado</span>':''}</div>${p.nota&&p.nota!=='oct'?`<div class="meta"><span style="white-space:normal">${esc(p.nota)}</span></div>`:''}${prog}${acts}${form}${p.own?`<button class="del" data-del="${p.idx}">Quitar</button>`:''}</div>
   <div class="pct">${esc(p.pct)}%<small>${esc(diasTxt(p.dias))}</small></div></article>`;
 }
 
@@ -315,12 +362,19 @@ function renderMap(){
   $('map').innerHTML=head+'<tbody>'+body+'</tbody>';
 }
 
-function render(){renderDays();renderBanks();renderBest();renderBig();renderList();renderMap();$('ownlist').innerHTML=own.map((o,i)=>card({...o,own:1,idx:i})).join('')}
+function renderCalc(){$('sort').value=st.sort;const a=$('amt');if(document.activeElement!==a)a.value=st.amt?st.amt.toLocaleString('es-AR'):'';const mt=monthTotal();$('month').innerHTML=mt?`Reintegros este mes: <b>${money(mt)}</b>`:'Tocá «La usé» en una promo para llevar la cuenta de tus topes'}
+function render(){renderCalc();renderDays();renderBanks();renderBest();renderBig();renderList();renderMap();$('ownlist').innerHTML=own.map((o,i)=>card({...o,own:1,idx:i})).join('')}
 
 function toggleBank(b){st.mine.has(b)?st.mine.delete(b):st.mine.add(b);if(st.mine.size===1&&LS('promos-only')===null)st.only=true;SS('promos-banks',[...st.mine]);render()}
 
 document.addEventListener('click',e=>{
+  const sh=e.target.closest('a[data-share]');
+  if(sh){const p=all().find(x=>keyOf(x)===sh.dataset.share);if(p&&navigator.share){e.preventDefault();navigator.share({text:shareText(p)}).catch(()=>{})}return}
   const t=e.target.closest('button');if(!t)return;
+  if(t.dataset.amt!==undefined){st.amt=+t.dataset.amt;SS('promos-amt',st.amt);if(st.amt&&st.sort==='pct'){st.sort='save';$('sort').value='save'}render();return}
+  if(t.dataset.use){st.using=st.using===t.dataset.use?null:t.dataset.use;renderList();const f=document.querySelector('.usef input');if(f)f.focus();return}
+  if(t.dataset.cancel){st.using=null;renderList();return}
+  if(t.dataset.undo){const a=uso[t.dataset.undo]||[];a.pop();if(!a.length)delete uso[t.dataset.undo];SS('promos-uso',uso);render();toast('Último uso borrado');return}
   if(t.dataset.d!==undefined){st.day=+t.dataset.d;render()}
   else if(t.dataset.go){st.cat=t.dataset.go;render();$('todo').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'})}
   else if(t.dataset.c){st.cat=t.dataset.c;render()}
@@ -329,6 +383,12 @@ document.addEventListener('click',e=>{
   else if(t.id==='clear'){st.mine.clear();SS('promos-banks',[]);render()}
 });
 $('q').addEventListener('input',e=>{st.q=e.target.value;renderList()});
+$('amt').addEventListener('input',e=>{const v=+e.target.value.replace(/\D/g,'');e.target.value=v?v.toLocaleString('es-AR'):'';st.amt=v;SS('promos-amt',v);if(v&&st.sort==='pct'){st.sort='save';$('sort').value='save'}renderBest();renderList();});
+document.addEventListener('submit',e=>{const f=e.target.closest('form.usef');if(!f)return;e.preventDefault();
+  const k=f.dataset.k,p=all().find(x=>keyOf(x)===k);const g=+String(f.g.value).replace(/\D/g,'');if(!p||!g)return;
+  const mn=num(p.min);if(mn&&g<mn){toast('Ojo: no llegaste al mínimo de '+money(mn));return}
+  let r=g*p.pct/100;const l=left(p);if(l!==null&&l!==Infinity)r=Math.min(r,l);
+  (uso[k]=uso[k]||[]).push({t:Date.now(),g,r});SS('promos-uso',uso);st.using=null;render();toast('Anotado: '+money(r)+' de reintegro');});
 $('sort').addEventListener('change',e=>{st.sort=e.target.value;renderList()});
 $('onlyMine').addEventListener('change',e=>{st.only=e.target.checked;SS('promos-only',st.only);render()});
 $('f').addEventListener('submit',e=>{

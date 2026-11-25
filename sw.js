@@ -1,6 +1,6 @@
 // Service worker: guarda la app para usarla sin conexión.
 // Cambiá VERSION cada vez que modifiques index.html, así los celulares bajan la versión nueva.
-const VERSION = 'promos-v4';
+const VERSION = 'promos-v5';
 const APP = ['./', './index.html', './manifest.json', './icons/icon-180.png', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', e => {
